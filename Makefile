@@ -1,9 +1,5 @@
 all: clean default-switch build copy-docs
 
-.PHONY: clean-bs
-clean-bs:
-	yarn bsb -clean-world
-
 .PHONY: clean-native
 clean-native:
 	opam exec -- dune clean
@@ -18,18 +14,11 @@ clean-coverage:
 	rm -f coverage.json
 
 .PHONY: clean
-clean: clean-bs clean-native clean-docs clean-coverage
-
-.PHONY: build-bs
-build-bs:
-	yarn bsb -make-world
-
-.PHONY: build-native
-build-native:
-	opam exec -- dune build @all
+clean: clean-native clean-docs clean-coverage
 
 .PHONY: build
-build: build-bs build-native
+build:
+	opam exec -- dune build @all
 
 .PHONY: fmt
 fmt:
@@ -54,20 +43,9 @@ copy-docs: docs
 open-docs: copy-docs
 	xdg-open docs/index.html
 
-.PHONY: test-bs
-test-bs: build-bs
-	yarn test
-
-.PHONY: test-native
-test-native: build-native
-	opam exec -- dune runtest --no-buffer
-
 .PHONY: test
-test: test-bs test-native
-
-.PHONY: bisect-bs
-bisect-bs:
-	BISECT_ENABLE=yes make test-bs
+test: build
+	opam exec -- dune runtest --no-buffer
 
 .PHONY: bisect
 bisect:
@@ -94,19 +72,11 @@ coveralls-api: coveralls-json coveralls-send-api
 coveralls:
 	opam exec -- bisect-ppx-report send-to Coveralls
 
-.PHONY: watch-native
-watch-native:
+.PHONY: watch
+watch:
 	opam exec -- dune build @all -w
 
-.PHONY: watch-bs
-watch-bs:
-	yarn bsb -make-world -w
-
-.PHONY: watch-test-bs
-watch-test-bs:
-	yarn run watch-test
-
-.PHONY: watch-test-native
+.PHONY: watch-test
 watch-test:
 	opam exec -- dune runtest --no-buffer -w
 
@@ -122,17 +92,17 @@ remove-switch:
 dev-tools:
 	opam install -y merlin ocamlformat utop
 
-.PHONY: create-4.08-switch
-create-4.08-switch:
-	opam switch create -y . 4.08.1 -t -d
+.PHONY: create-4.14-switch
+create-4.14-switch:
+	opam switch create -y . 4.14.1 --deps-only --with-test --with-doc
 
-.PHONY: 4.08-switch
-4.08-switch: remove-switch create-4.08-switch dev-tools
+.PHONY: 4.14-switch
+4.14-switch: remove-switch create-4.14-switch dev-tools
 	eval $(opam env)
 
 .PHONY: create-default-switch
 create-default-switch:
-	opam switch create -y . -t -d
+	opam switch create -y . --with-test --with-doc
 
 .PHONY: default-switch
 default-switch: remove-switch create-default-switch dev-tools
